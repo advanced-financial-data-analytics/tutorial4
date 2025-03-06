@@ -2,6 +2,7 @@
 title: "Tutorial 4 - Stationarity and Time Series Foundations"
 subtitle: "Understanding and Transforming Financial Time Series"
 description: "This tutorial introduces fundamental concepts of time series stationarity and appropriate transformations for financial data analysis"
+embed-resources: true
 output: 
   tufte::tufte_html:
     css: ../hw.css

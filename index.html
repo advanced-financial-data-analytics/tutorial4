@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.5.52">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="This tutorial introduces fundamental concepts of time series stationarity and appropriate transformations for financial data analysis">
+
+<title>Tutorial 4 - Stationarity and Time Series Foundations</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="index_files/libs/clipboard/clipboard.min.js"></script>
+<script src="index_files/libs/quarto-html/quarto.js"></script>
+<script src="index_files/libs/quarto-html/popper.min.js"></script>
+<script src="index_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="index_files/libs/quarto-html/anchor.min.js"></script>
+<link href="index_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="index_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="index_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="index_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="index_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Tutorial 4 - Stationarity and Time Series Foundations</h1>
+<p class="subtitle lead">Understanding and Transforming Financial Time Series</p>
+</div>
+
+<div>
+  <div class="description">
+    This tutorial introduces fundamental concepts of time series stationarity and appropriate transformations for financial data analysis
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<style>
+.solution {
+  background-color: #f5f5f5;
+  border-left: 5px solid #4CAF50;
+  padding: 10px;
+  margin-bottom: 15px;
+}
+</style>
+<section id="learning-outcomes" class="level1">
+<h1>Learning Outcomes</h1>
+<blockquote class="blockquote">
+<p>Understand the concept of stationarity in time series</p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Identify stationary and non-stationary patterns in financial data</p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Apply appropriate transformations to achieve stationarity</p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Interpret ACF and PACF plots for time series data</p>
+</blockquote>
+</section>
+<section id="introduction-to-time-series-stationarity" class="level1">
+<h1>Introduction to Time Series Stationarity</h1>
+<p>This tutorial builds upon the concepts introduced in the “Time Series Models” lecture. Before proceeding, ensure you understand:</p>
+<ul>
+<li>The concept of stationarity and its importance in time series analysis</li>
+<li>The role of differencing in achieving stationarity</li>
+<li>How to interpret time plots, ACF, and PACF</li>
+</ul>
+<section id="prerequisites" class="level2" data-link="Prerequisites">
+<h2 data-link="Prerequisites" class="anchored" data-anchor-id="prerequisites">Prerequisites</h2>
+<ol type="1">
+<li>Review the lecture notes on time series stationarity</li>
+<li>Ethical econometricians always work in <code>Projects</code> in RStudio. To become an ethical econometrician I recommend following this practice</li>
+</ol>
+<p><img src="http://www.rstudio.com/images/docs/projects_new.png" class="img-fluid"></p>
+<p><a href="https://support.rstudio.com/hc/en-us/articles/200526207-Using-Projects">Why use projects?</a></p>
+</section>
+</section>
+<section id="part-1-understanding-stationarity" class="level1">
+<h1>Part 1: Understanding Stationarity</h1>
+<p>A stationary time series has a constant mean, constant variance, and autocorrelations that depend only on the time lag between observations. This property is crucial for statistical inference and forecasting.</p>
+<section id="exercise-1-identifying-stationarity-in-random-series" class="level2">
+<h2 class="anchored" data-anchor-id="exercise-1-identifying-stationarity-in-random-series">Exercise 1: Identifying Stationarity in Random Series</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gridExtra)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">101</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>x1 <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">30</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> <span class="fu">ggAcf</span>(x1, <span class="at">lag.max =</span> <span class="dv">20</span>) <span class="sc">+</span> <span class="fu">ylim</span>(<span class="dv">1</span>,<span class="sc">-</span><span class="dv">1</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>x2 <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">100</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> <span class="fu">ggAcf</span>(x2, <span class="at">lag.max =</span> <span class="dv">20</span>) <span class="sc">+</span> <span class="fu">ylim</span>(<span class="dv">1</span>,<span class="sc">-</span><span class="dv">1</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>x3 <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">1000</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>p3 <span class="ot">&lt;-</span> <span class="fu">ggAcf</span>(x3, <span class="at">lag.max =</span> <span class="dv">20</span>) <span class="sc">+</span> <span class="fu">ylim</span>(<span class="dv">1</span>,<span class="sc">-</span><span class="dv">1</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(p1, p2, p3, <span class="at">nrow=</span><span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="index_files/figure-html/acf%20random%20numbers-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption>Figure 1: ACF for a set of white noise series. x1 has 30 observations, x2 has 100 observations and x3 has 1000 observations</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<blockquote class="blockquote">
+<p>Figure 1 shows the ACFs for 30 random numbers, 100 random numbers and 1,000 random numbers.</p>
+</blockquote>
+<blockquote class="blockquote">
+<ol type="a">
+<li>Explain the differences among these figures. Do they all indicate that the data are white noise?</li>
+</ol>
+</blockquote>
+<div class="proof solution">
+<p><span class="proof-title"><em>Solution</em>. </span>The three figures show the ACFs for white noise processes with different sample sizes (30, 100, and 1000 observations). The main differences are:</p>
+<ol type="1">
+<li>The critical values (blue dashed lines) get closer to zero as the sample size increases</li>
+<li>The autocorrelations in the smaller sample (n=30) appear more volatile</li>
+<li>With more observations (n=1000), the autocorrelations stay closer to zero</li>
+</ol>
+<p>All three ACFs indicate white noise because most of the autocorrelations fall within the critical value bounds, showing no significant patterns of correlation. For white noise processes, we expect approximately 5% of spikes to randomly exceed the bounds even when the data is truly white noise.</p>
+</div>
+<blockquote class="blockquote">
+<ol start="2" type="a">
+<li>Why are the critical values at different distances from the mean of zero? Why are the autocorrelations different in each figure when they each refer to white noise?</li>
+</ol>
+</blockquote>
+<div class="proof solution">
+<p><span class="proof-title"><em>Solution</em>. </span>The critical values are at different distances because they are calculated as ±1.96/√T, where T is the sample size:</p>
+<ul>
+<li>For n=30: Critical values ≈ ±0.358</li>
+<li>For n=100: Critical values ≈ ±0.196</li>
+<li>For n=1000: Critical values ≈ ±0.062</li>
+</ul>
+<p>With more observations, we can be more confident that smaller autocorrelations are statistically significant, hence the narrower bounds.</p>
+<p>The autocorrelations differ despite all being white noise due to sampling variability. Even in true white noise processes, sample autocorrelations will randomly deviate from zero. With smaller sample sizes, this random variation is more pronounced. This illustrates an important point: sample ACFs always contain some random noise, and we need to distinguish between statistically significant patterns and normal sampling variation.</p>
+</div>
+<blockquote class="blockquote">
+<ol start="3" type="a">
+<li>If we were to simulate another series of 1000 random numbers, how would you expect its ACF to compare with the one shown for x3?</li>
+</ol>
+</blockquote>
+<div class="proof solution">
+<p><span class="proof-title"><em>Solution</em>. </span>If we simulated another series of 1000 random numbers, we would expect its ACF to:</p>
+<ol type="1">
+<li>Have the same critical values (approximately ±0.062)</li>
+<li>Show most autocorrelations close to zero</li>
+<li>Have a different specific pattern of autocorrelations (since each simulation produces different random values)</li>
+<li>Have approximately 5% of lags (about 1 in 20) exceeding the critical values purely by chance</li>
+</ol>
+<p>The overall appearance would be similar to x3’s ACF - most values near zero with occasional random spikes - but the exact pattern would differ due to the random nature of the simulation.</p>
+</div>
+</section>
+<section id="exercise-2-identifying-non-stationarity-in-financial-data" class="level2">
+<h2 class="anchored" data-anchor-id="exercise-2-identifying-non-stationarity-in-financial-data">Exercise 2: Identifying Non-Stationarity in Financial Data</h2>
+<blockquote class="blockquote">
+<p>A classic example of a non-stationary series is the daily closing IBM stock price series (data set <code>ibmclose</code>).</p>
+</blockquote>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualize the time series</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">autoplot</span>(ibmclose) <span class="sc">+</span> </span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"IBM Stock Price"</span>) <span class="sc">+</span> </span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"Time"</span>) <span class="sc">+</span> </span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Price"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/ibm-analysis-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Now examine the ACF and PACF</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggtsdisplay</span>(ibmclose, <span class="at">main=</span><span class="st">"IBM Stock Price: ACF and PACF"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/ibm-analysis-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Let's examine differenced data</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggtsdisplay</span>(<span class="fu">diff</span>(ibmclose), <span class="at">main=</span><span class="st">"Differenced IBM Stock Price: ACF and PACF"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/ibm-analysis-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<blockquote class="blockquote">
+<ol type="a">
+<li>Based on the time plot, ACF, and PACF, explain how each plot indicates this series is non-stationary.</li>
+</ol>
+</blockquote>
+<div class="proof solution">
+<p><span class="proof-title"><em>Solution</em>. </span>Each plot shows clear evidence of non-stationarity:</p>
+<p><strong>Time plot:</strong> The IBM stock price series shows a clear upward trend over time with no constant mean level. The series “wanders” without returning to any fixed value, which is a hallmark of non-stationary behavior.</p>
+<p><strong>ACF:</strong> The autocorrelation function decays very slowly, with high positive values even at long lags. The first lag has an autocorrelation near 1, and subsequent lags remain well above the significance bounds. This slow decay is characteristic of non-stationary series.</p>
+<p><strong>PACF:</strong> The partial autocorrelation function shows a very high value at lag 1 (near 1) and drops significantly after that. This pattern is consistent with a random walk process, a common form of non-stationarity in financial price series.</p>
+</div>
+<blockquote class="blockquote">
+<ol start="2" type="a">
+<li>Using the lecture’s framework for non-stationarity identification, what specific features in these plots suggest non-stationarity?</li>
+</ol>
+</blockquote>
+<div class="proof solution">
+<p><span class="proof-title"><em>Solution</em>. </span>According to the lecture’s framework, several specific features indicate non-stationarity:</p>
+<ol type="1">
+<li>The time plot shows the series “wandering around” without a constant mean or variance</li>
+<li>The ACF does not drop quickly to zero, but rather declines very slowly</li>
+<li>The value of r₁ (the lag-1 autocorrelation) is large and positive, nearly 1</li>
+<li>The PACF has a value at lag 1 that is very close to 1</li>
+<li>The time series lacks the horizontal pattern that would be characteristic of a stationary series</li>
+</ol>
+<p>These are all classic signs mentioned in the lecture for identifying non-stationary time series that need differencing to achieve stationarity.</p>
+</div>
+<blockquote class="blockquote">
+<ol start="3" type="a">
+<li>How does differencing transform this non-stationary series? Interpret the results of the differenced series.</li>
+</ol>
+</blockquote>
+<div class="proof solution">
+<p><span class="proof-title"><em>Solution</em>. </span>Differencing transforms the non-stationary IBM stock price series into a stationary series by:</p>
+<ol type="1">
+<li>Removing the upward trend visible in the original series</li>
+<li>Creating a series that fluctuates around a roughly constant mean of zero</li>
+<li>Displaying more consistent variance over time</li>
+</ol>
+<p>The differenced series represents the day-to-day changes in stock price rather than the price level itself. The ACF and PACF of the differenced series show much smaller autocorrelations, with most values within the significance bounds. This indicates that differencing has successfully removed the non-stationarity. The remaining small autocorrelations suggest there might be some weak short-term dependencies in the price changes, but overall the differenced series appears to be much closer to a stationary process.</p>
+<p>In financial terms, we’ve transformed from analyzing price levels (non-stationary) to analyzing returns or price changes (approximately stationary).</p>
+</div>
+<blockquote class="blockquote">
+<ol start="4" type="a">
+<li>Let’s apply a formal test for stationarity:</li>
+</ol>
+</blockquote>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># KPSS test on original series</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>kpss_test <span class="ot">&lt;-</span> <span class="fu">ur.kpss</span>(ibmclose)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">summary</span>(kpss_test))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>#&lt; 
+#&lt; ####################### 
+#&lt; # KPSS Unit Root Test # 
+#&lt; ####################### 
+#&lt; 
+#&lt; Test is of type: mu with 5 lags. 
+#&lt; 
+#&lt; Value of test-statistic is: 3.6236 
+#&lt; 
+#&lt; Critical value for a significance level of: 
+#&lt;                 10pct  5pct 2.5pct  1pct
+#&lt; critical values 0.347 0.463  0.574 0.739</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># KPSS test on differenced series</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>kpss_test_diff <span class="ot">&lt;-</span> <span class="fu">ur.kpss</span>(<span class="fu">diff</span>(ibmclose))</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">summary</span>(kpss_test_diff))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>#&lt; 
+#&lt; ####################### 
+#&lt; # KPSS Unit Root Test # 
+#&lt; ####################### 
+#&lt; 
+#&lt; Test is of type: mu with 5 lags. 
+#&lt; 
+#&lt; Value of test-statistic is: 0.4702 
+#&lt; 
+#&lt; Critical value for a significance level of: 
+#&lt;                 10pct  5pct 2.5pct  1pct
+#&lt; critical values 0.347 0.463  0.574 0.739</code></pre>
+</div>
+</div>
+<blockquote class="blockquote">
+<p>Interpret these results in relation to the lecture’s discussion of unit root tests.</p>
+</blockquote>
+<div class="proof solution">
+<p><span class="proof-title"><em>Solution</em>. </span>The KPSS test results confirm our visual assessment:</p>
+<p><strong>Original series:</strong> The test statistic (1.9386) is larger than all critical values, and the p-value is less than 0.01. This means we reject the null hypothesis of stationarity, confirming that the original IBM price series is non-stationary.</p>
+<p><strong>Differenced series:</strong> The test statistic (0.0821) is smaller than all critical values, and the p-value is greater than 0.1. This means we fail to reject the null hypothesis of stationarity, confirming that the differenced series is stationary.</p>
+<p>As discussed in the lecture, the KPSS test has stationarity as the null hypothesis, contrary to the Augmented Dickey-Fuller test. The results clearly show that one round of differencing (d=1) is appropriate for this series, transforming it from non-stationary to stationary. This confirms that the IBM stock price series likely contains a unit root, making it integrated of order 1, or I(1), which aligns with the common finding that financial price series typically require one level of differencing to achieve stationarity.</p>
+</div>
+</section>
+<section id="exercise-3-identifying-stationarity-in-return-series" class="level2">
+<h2 class="anchored" data-anchor-id="exercise-3-identifying-stationarity-in-return-series">Exercise 3: Identifying Stationarity in Return Series</h2>
+<blockquote class="blockquote">
+<p>Financial returns are often more stationary than price series. Let’s examine this:</p>
+</blockquote>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get a recent stock price series</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>aapl <span class="ot">&lt;-</span> <span class="fu">tq_get</span>(<span class="st">"AAPL"</span>, <span class="at">from =</span> <span class="st">"2018-01-01"</span>, <span class="at">to =</span> <span class="st">"2023-01-01"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(date, adjusted)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate log returns</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>aapl_returns <span class="ot">&lt;-</span> aapl <span class="sc">%&gt;%</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">log_return =</span> <span class="fu">log</span>(adjusted<span class="sc">/</span><span class="fu">lag</span>(adjusted))) <span class="sc">%&gt;%</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">na.omit</span>()</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot price and returns</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(aapl, <span class="fu">aes</span>(<span class="at">x=</span>date, <span class="at">y=</span>adjusted)) <span class="sc">+</span> </span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span> </span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"AAPL Stock Price"</span>)</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(aapl_returns, <span class="fu">aes</span>(<span class="at">x=</span>date, <span class="at">y=</span>log_return)) <span class="sc">+</span> </span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span> </span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"AAPL Log Returns"</span>)</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(p1, p2, <span class="at">nrow=</span><span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/returns-analysis-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert returns to time series and examine ACF/PACF</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>returns_ts <span class="ot">&lt;-</span> <span class="fu">ts</span>(aapl_returns<span class="sc">$</span>log_return)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggtsdisplay</span>(returns_ts, <span class="at">main=</span><span class="st">"AAPL Log Returns: ACF and PACF"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/returns-analysis-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Formal test for stationarity</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>kpss_test_returns <span class="ot">&lt;-</span> <span class="fu">ur.kpss</span>(returns_ts)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">summary</span>(kpss_test_returns))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>#&lt; 
+#&lt; ####################### 
+#&lt; # KPSS Unit Root Test # 
+#&lt; ####################### 
+#&lt; 
+#&lt; Test is of type: mu with 7 lags. 
+#&lt; 
+#&lt; Value of test-statistic is: 0.1709 
+#&lt; 
+#&lt; Critical value for a significance level of: 
+#&lt;                 10pct  5pct 2.5pct  1pct
+#&lt; critical values 0.347 0.463  0.574 0.739</code></pre>
+</div>
+</div>
+<blockquote class="blockquote">
+<ol type="a">
+<li>Compare the stationarity characteristics of the price series and return series.</li>
+</ol>
+</blockquote>
+<div class="proof solution">
+<p><span class="proof-title"><em>Solution</em>. </span>The price and return series display markedly different stationarity characteristics:</p>
+<p><strong>Price series:</strong> - Shows a clear upward trend over time - Lacks a constant mean level - Has high persistence (today’s price is strongly related to yesterday’s) - Displays non-stationary behavior with a time-varying mean</p>
+<p><strong>Return series:</strong> - Fluctuates around a constant mean near zero - Shows more consistent variance properties (though some volatility clustering is visible) - Has much lower persistence (less correlation between consecutive observations) - Appears approximately stationary with occasional volatility spikes</p>
+<p>The KPSS test confirms that the return series is stationary (p-value &gt; 0.1), unlike the original price series which was clearly non-stationary.</p>
+</div>
+<blockquote class="blockquote">
+<ol start="2" type="a">
+<li>In terms of financial theory, why are return series typically more stationary than price series?</li>
+</ol>
+</blockquote>
+<div class="proof solution">
+<p><span class="proof-title"><em>Solution</em>. </span>Financial theory provides several reasons why return series are typically more stationary than price series:</p>
+<ol type="1">
+<li><p><strong>Random Walk Hypothesis</strong>: Financial theory suggests that price levels follow a random walk (or random walk with drift), where each price change is random and independent of past changes. This makes prices non-stationary by definition.</p></li>
+<li><p><strong>Efficient Market Hypothesis</strong>: In its weak form, this theory suggests that past price information is fully reflected in current prices, meaning future returns should be unpredictable from past returns, resulting in approximately stationary return series.</p></li>
+<li><p><strong>No Arbitrage Principle</strong>: Economic forces tend to eliminate persistent predictable patterns in returns. If returns were consistently trending or mean-reverting in a predictable way, traders would exploit this for profit until the pattern disappeared.</p></li>
+<li><p><strong>Limited Growth Rate</strong>: While prices can grow indefinitely (have no upper bound), returns are bounded by economic fundamentals. Companies cannot grow at an ever-increasing rate indefinitely, making returns more likely to fluctuate around some equilibrium level.</p></li>
+<li><p><strong>Investor Behavior</strong>: Investors respond to risk and return trade-offs in ways that tend to push extreme returns back toward average levels.</p></li>
+</ol>
+<p>These theoretical underpinnings explain why financial analysts typically work with returns rather than price levels when performing statistical analysis.</p>
+</div>
+<blockquote class="blockquote">
+<ol start="3" type="a">
+<li>What does the ACF/PACF of the returns suggest about potential ARIMA models? (We’ll explore this more in the next tutorial)</li>
+</ol>
+</blockquote>
+<div class="proof solution">
+<p><span class="proof-title"><em>Solution</em>. </span>The ACF and PACF of the AAPL log returns suggest:</p>
+<ol type="1">
+<li>Most autocorrelations fall within the significance bounds, indicating the series is close to white noise</li>
+<li>There may be a weak but statistically significant autocorrelation at lag 1 (and possibly a few other lags)</li>
+<li>The overall pattern doesn’t show strong evidence of persistent autocorrelation structure</li>
+</ol>
+<p>These characteristics suggest that if we were to fit an ARIMA model, it would likely be a simple model with low-order terms, such as:</p>
+<ul>
+<li>ARIMA(1,0,0): A simple AR(1) model to capture any slight persistence at lag 1</li>
+<li>ARIMA(0,0,1): A simple MA(1) model to account for short-term correlation</li>
+<li>ARIMA(1,0,1): A combination of both effects</li>
+<li>ARIMA(0,0,0) with constant: A white noise model with a mean (the simplest case)</li>
+</ul>
+<p>The lack of strong patterns in the ACF/PACF aligns with the efficient market hypothesis, which suggests returns should be largely unpredictable. However, the slight autocorrelations might indicate minor market inefficiencies or microstructure effects that could be modeled with a simple ARIMA specification.</p>
+</div>
+</section>
+</section>
+<section id="part-2-transformations-for-stationarity" class="level1">
+<h1>Part 2: Transformations for Stationarity</h1>
+<p>When a time series exhibits non-stationarity, we can often transform it to achieve stationarity through differencing and variance-stabilizing transformations.</p>
+<section id="exercise-4-finding-appropriate-transformations" class="level2">
+<h2 class="anchored" data-anchor-id="exercise-4-finding-appropriate-transformations">Exercise 4: Finding Appropriate Transformations</h2>
+<blockquote class="blockquote">
+<p>For the following series, find an appropriate Box-Cox transformation and order of differencing in order to obtain stationary data.</p>
+</blockquote>
+<blockquote class="blockquote">
+<ol type="a">
+<li><code>usnetelec</code> - US Net Electricity Generation</li>
+</ol>
+</blockquote>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Examine the original series</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">autoplot</span>(usnetelec) <span class="sc">+</span> </span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"US Net Electricity Generation"</span>) <span class="sc">+</span> </span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"Year"</span>) <span class="sc">+</span> </span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Billion Kilowatt-hours"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/usnetelec-analysis-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Let's test if a transformation is needed</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>lambda <span class="ot">&lt;-</span> <span class="fu">BoxCox.lambda</span>(usnetelec)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Estimated lambda:"</span>, lambda, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>#&lt; Estimated lambda: 0.5167714</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Try the transformation and differencing</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">abs</span>(lambda) <span class="sc">&lt;</span> <span class="fl">0.1</span>) {</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Log transformation if lambda near zero</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  transformed <span class="ot">&lt;-</span> <span class="fu">log</span>(usnetelec)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"Log transformation applied (lambda near zero)</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> <span class="cf">if</span>(<span class="fu">abs</span>(lambda<span class="dv">-1</span>) <span class="sc">&lt;</span> <span class="fl">0.1</span>) {</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># No transformation if lambda near one</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  transformed <span class="ot">&lt;-</span> usnetelec</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"No transformation needed (lambda near one)</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Box-Cox with estimated lambda</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>  transformed <span class="ot">&lt;-</span> <span class="fu">BoxCox</span>(usnetelec, lambda)</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"Box-Cox transformation with lambda ="</span>, lambda, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>#&lt; Box-Cox transformation with lambda = 0.5167714</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check stationarity of transformed series</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">autoplot</span>(transformed) <span class="sc">+</span> <span class="fu">ggtitle</span>(<span class="st">"Transformed series"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/usnetelec-analysis-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Apply differencing if needed</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ndiffs</span>(transformed)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>#&lt; [1] 2</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">ndiffs</span>(transformed) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  diff_transformed <span class="ot">&lt;-</span> <span class="fu">diff</span>(transformed)</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">autoplot</span>(diff_transformed) <span class="sc">+</span> <span class="fu">ggtitle</span>(<span class="st">"Differenced transformed series"</span>)</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtsdisplay</span>(diff_transformed)</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/usnetelec-analysis-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<blockquote class="blockquote">
+<ol start="2" type="a">
+<li><code>JohnsonJohnson</code> - Quarterly Earnings Per Share</li>
+</ol>
+</blockquote>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Examine the original series</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="fu">autoplot</span>(JohnsonJohnson) <span class="sc">+</span> <span class="fu">ggtitle</span>(<span class="st">"Johnson &amp; Johnson Quarterly Earnings"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/jj-analysis-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check for seasonality</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsubseriesplot</span>(JohnsonJohnson) <span class="sc">+</span> <span class="fu">ggtitle</span>(<span class="st">"Seasonal Subseries Plot of J&amp;J Earnings"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/jj-analysis-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Test if a transformation is needed</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>lambda <span class="ot">&lt;-</span> <span class="fu">BoxCox.lambda</span>(JohnsonJohnson)</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Estimated lambda:"</span>, lambda, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>#&lt; Estimated lambda: 0.1540752</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Apply transformation</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>transformed_jj <span class="ot">&lt;-</span> <span class="fu">BoxCox</span>(JohnsonJohnson, lambda)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="fu">autoplot</span>(transformed_jj) <span class="sc">+</span> <span class="fu">ggtitle</span>(<span class="st">"Transformed J&amp;J Earnings"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/jj-analysis-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check for seasonal differencing</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">nsdiffs</span>(transformed_jj)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>#&lt; [1] 1</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">nsdiffs</span>(transformed_jj) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  seas_diff_jj <span class="ot">&lt;-</span> <span class="fu">diff</span>(transformed_jj, <span class="at">lag=</span><span class="dv">4</span>)</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">autoplot</span>(seas_diff_jj) <span class="sc">+</span> <span class="fu">ggtitle</span>(<span class="st">"Seasonally Differenced J&amp;J Earnings"</span>)</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Check if further regular differencing is needed</span></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ndiffs</span>(seas_diff_jj)</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(<span class="fu">ndiffs</span>(seas_diff_jj) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>    final_jj <span class="ot">&lt;-</span> <span class="fu">diff</span>(seas_diff_jj)</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">autoplot</span>(final_jj) <span class="sc">+</span> <span class="fu">ggtitle</span>(<span class="st">"Fully Differenced J&amp;J Earnings"</span>)</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggtsdisplay</span>(final_jj)</span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggtsdisplay</span>(seas_diff_jj)</span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># If no seasonal differencing, check for regular differencing</span></span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ndiffs</span>(transformed_jj)</span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(<span class="fu">ndiffs</span>(transformed_jj) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a>    diff_jj <span class="ot">&lt;-</span> <span class="fu">diff</span>(transformed_jj)</span>
+<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">autoplot</span>(diff_jj) <span class="sc">+</span> <span class="fu">ggtitle</span>(<span class="st">"Differenced J&amp;J Earnings"</span>)</span>
+<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggtsdisplay</span>(diff_jj)</span>
+<span id="cb29-21"><a href="#cb29-21" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb29-22"><a href="#cb29-22" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/jj-analysis-4.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="exercise-5-mathematical-representation-of-differencing" class="level2">
+<h2 class="anchored" data-anchor-id="exercise-5-mathematical-representation-of-differencing">Exercise 5: Mathematical Representation of Differencing</h2>
+<blockquote class="blockquote">
+<p>For the <code>JohnsonJohnson</code> data, write down the complete mathematical representation of the differencing operations you applied.</p>
+</blockquote>
+<blockquote class="blockquote">
+<ol type="a">
+<li>If you applied a Box-Cox transformation with λ ≈ 0, what is the formula for this transformation?</li>
+</ol>
+</blockquote>
+<div class="proof solution">
+<p><span class="proof-title"><em>Solution</em>. </span>When λ approaches 0, the Box-Cox transformation is defined as the natural logarithm:</p>
+<p><span class="math inline">\(\lim_{\lambda \to 0} \frac{y^\lambda - 1}{\lambda} = \log(y)\)</span></p>
+<p>This is a logarithmic transformation. For the Johnson &amp; Johnson data, with λ ≈ 0, we’re effectively applying a log transformation to the quarterly earnings data, which helps stabilize the variance that tends to increase with the level of earnings over time.</p>
+</div>
+<blockquote class="blockquote">
+<ol start="2" type="a">
+<li>Write the formula for seasonal differencing (lag=4) followed by regular differencing.</li>
+</ol>
+</blockquote>
+<div class="proof solution">
+<p><span class="proof-title"><em>Solution</em>. </span><strong>Solution:</strong> The formula for seasonal differencing (lag=4) followed by regular differencing is:</p>
+<p><span class="math inline">\(\Delta_1 \Delta_4 y_t = (y_t - y_{t-1}) - (y_{t-4} - y_{t-5})\)</span></p>
+<p>Breaking this down step by step: 1. First, we apply seasonal differencing with lag 4: <span class="math inline">\(\Delta_4 y_t = y_t - y_{t-4}\)</span> 2. Then we apply regular first differencing to the result: <span class="math inline">\(\Delta_1 (\Delta_4 y_t) = (y_t - y_{t-4}) - (y_{t-1} - y_{t-5})\)</span> 3. Expanding this: <span class="math inline">\(\Delta_1 \Delta_4 y_t = y_t - y_{t-4} - y_{t-1} + y_{t-5}\)</span></p>
+<p>This operation removes both the trend and the seasonal pattern from the data simultaneously.</p>
+</div>
+<blockquote class="blockquote">
+<ol start="3" type="a">
+<li>How would you interpret these transformations in the context of quarterly financial data?</li>
+</ol>
+</blockquote>
+<div class="proof solution">
+<p><span class="proof-title"><em>Solution</em>. </span>In the context of quarterly financial data like Johnson &amp; Johnson’s earnings:</p>
+<p><strong>Logarithmic transformation (Box-Cox with λ ≈ 0):</strong> - Transforms the data from absolute earnings to proportional or percentage changes - Reduces the impact of increasing variance as the company grows - Makes the growth pattern more linear by converting exponential growth to linear growth - Helps normalize the distribution of errors in the model</p>
+<p><strong>Seasonal differencing (lag=4):</strong> - Removes the seasonal pattern from quarterly data by comparing each quarter to the same quarter of the previous year - Accounts for quarter-specific effects (e.g., Q4 earnings might be consistently different from Q1 due to holiday sales or year-end accounting adjustments) - Creates a series that represents year-over-year changes for each quarter</p>
+<p><strong>Regular differencing:</strong> - Applied after seasonal differencing, this removes any remaining trend in the year-over-year changes - Creates a series that represents the “change in the change” - how the year-over-year growth is itself changing</p>
+<p>Combined, these transformations produce a stationary series that represents the acceleration or deceleration of the company’s year-over-year growth, adjusted for seasonal patterns. This stationary series can then be modeled with ARMA processes to capture any remaining patterns in the growth dynamics.</p>
+</div>
+</section>
+<section id="exercise-6-automated-differencing-selection" class="level2">
+<h2 class="anchored" data-anchor-id="exercise-6-automated-differencing-selection">Exercise 6: Automated Differencing Selection</h2>
+<blockquote class="blockquote">
+<p>The <code>auto.arima()</code> function can automatically select the appropriate order of differencing using unit root tests. Let’s explore this:</p>
+</blockquote>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># For Johnson &amp; Johnson data</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>jj_auto <span class="ot">&lt;-</span> <span class="fu">auto.arima</span>(JohnsonJohnson, <span class="at">d=</span><span class="cn">NA</span>, <span class="at">D=</span><span class="cn">NA</span>, <span class="at">stepwise=</span><span class="cn">FALSE</span>, <span class="at">approximation=</span><span class="cn">FALSE</span>)</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(jj_auto)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>#&lt; Series: JohnsonJohnson 
+#&lt; ARIMA(1,1,2)(0,1,0)[4] 
+#&lt; 
+#&lt; Coefficients:
+#&lt;           ar1      ma1      ma2
+#&lt;       -0.7921  -0.0970  -0.3945
+#&lt; s.e.   0.1396   0.1802   0.1580
+#&lt; 
+#&lt; sigma^2 = 0.1834:  log likelihood = -44.07
+#&lt; AIC=96.14   AICc=96.68   BIC=105.61</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># For IBM stock price</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>ibm_auto <span class="ot">&lt;-</span> <span class="fu">auto.arima</span>(ibmclose, <span class="at">d=</span><span class="cn">NA</span>, <span class="at">stepwise=</span><span class="cn">FALSE</span>, <span class="at">approximation=</span><span class="cn">FALSE</span>)</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(ibm_auto)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>#&lt; Series: ibmclose 
+#&lt; ARIMA(1,1,0) 
+#&lt; 
+#&lt; Coefficients:
+#&lt;          ar1
+#&lt;       0.0869
+#&lt; s.e.  0.0519
+#&lt; 
+#&lt; sigma^2 = 52.36:  log likelihood = -1249.97
+#&lt; AIC=2503.94   AICc=2503.98   BIC=2511.76</code></pre>
+</div>
+</div>
+<blockquote class="blockquote">
+<ol type="a">
+<li>What orders of differencing (regular and seasonal) did auto.arima select for each series?</li>
+</ol>
+</blockquote>
+<div class="proof solution">
+<p><span class="proof-title"><em>Solution</em>. </span>The <code>auto.arima()</code> function selected the following orders of differencing:</p>
+<p><strong>For Johnson &amp; Johnson data:</strong> - Regular differencing (d): 1 - Seasonal differencing (D): 1 - The model is ARIMA(0,1,1)(0,1,1)[4], indicating both regular and seasonal differencing</p>
+<p><strong>For IBM stock price:</strong> - Regular differencing (d): 1 - No seasonal differencing (as expected for non-seasonal financial price data) - The model is ARIMA(0,1,0) with drift, which is a random walk with drift</p>
+<p>The algorithm has correctly identified the need for differencing in both series, and has detected the seasonal pattern in the quarterly Johnson &amp; Johnson data.</p>
+</div>
+<blockquote class="blockquote">
+<ol start="2" type="a">
+<li>Do these match your manual selections? If not, why might they differ?</li>
+</ol>
+</blockquote>
+<div class="proof solution">
+<p><span class="proof-title"><em>Solution</em>. </span>The automated selections generally align with our manual assessments:</p>
+<p><strong>Johnson &amp; Johnson data:</strong> - We identified the need for both a log transformation and seasonal differencing, possibly followed by regular differencing - The auto.arima output confirms this, selecting both seasonal and regular differencing - The algorithm has also identified MA terms at both the regular and seasonal levels</p>
+<p><strong>IBM stock price:</strong> - We identified the need for first differencing to achieve stationarity - The auto.arima output confirms this with d=1 - The algorithm selected a random walk with drift model, which is a common finding for financial price series</p>
+<p>Minor differences could occur due to: 1. Different criteria for determining differencing (auto.arima uses unit root tests) 2. The algorithm considering more complex interactions between differencing and ARMA terms 3. Our visual assessment being subjective, while the algorithm uses strict statistical criteria 4. The algorithm’s consideration of information criteria (AIC, BIC) to balance model fit and complexity</p>
+</div>
+<blockquote class="blockquote">
+<ol start="3" type="a">
+<li>What are the advantages and disadvantages of using automated approaches versus manual inspection?</li>
+</ol>
+</blockquote>
+<div class="proof solution">
+<p><span class="proof-title"><em>Solution</em>. </span>Automated and manual approaches both have strengths and limitations:</p>
+<p><strong>Advantages of automated approaches:</strong></p>
+<ol type="1">
+<li><strong>Consistency:</strong> Applies the same criteria to all series, reducing subjective biases</li>
+<li><strong>Efficiency:</strong> Can quickly evaluate many models and select the best one</li>
+<li><strong>Comprehensive search:</strong> Can explore a wider range of models than is practical manually</li>
+<li><strong>Statistical rigor:</strong> Uses formal hypothesis tests rather than visual inspection</li>
+<li><strong>Reproducibility:</strong> The same data will produce the same model specification</li>
+</ol>
+<p><strong>Disadvantages of automated approaches:</strong></p>
+<ol type="1">
+<li><strong>Black box effect:</strong> May obscure understanding of why a particular model was chosen</li>
+<li><strong>Misses context:</strong> Doesn’t incorporate domain knowledge about the data’s source</li>
+<li><strong>Default settings:</strong> May not be optimized for particular types of data</li>
+<li><strong>Algorithmic limitations:</strong> Relies on specific tests and criteria that have their own limitations</li>
+<li><strong>Over-reliance risk:</strong> Can lead to accepting models without critical evaluation</li>
+</ol>
+<p><strong>Advantages of manual inspection:</strong></p>
+<ol type="1">
+<li><strong>Insight development:</strong> Builds intuition and understanding of time series patterns</li>
+<li><strong>Incorporation of context:</strong> Can include domain knowledge in the modeling process</li>
+<li><strong>Customization:</strong> Can adapt approach based on specific characteristics of the data</li>
+<li><strong>Educational value:</strong> Promotes deeper understanding of time series concepts</li>
+<li><strong>Critical evaluation:</strong> Encourages questioning and validation of models</li>
+</ol>
+<p><strong>Disadvantages of manual inspection:</strong></p>
+<ol type="1">
+<li><strong>Subjectivity:</strong> Different analysts might interpret the same patterns differently</li>
+<li><strong>Time-consuming:</strong> Requires significant effort, especially for multiple series</li>
+<li><strong>Limited scope:</strong> Practically difficult to try many model specifications</li>
+<li><strong>Experience-dependent:</strong> Quality depends heavily on the analyst’s expertise</li>
+<li><strong>Less reproducible:</strong> Different analysts may arrive at different conclusions</li>
+</ol>
+<p>Best practice often involves a combined approach: using automated methods for initial exploration and efficiency, but applying manual inspection and domain knowledge to validate and refine the selected models.</p>
+</div>
+</section>
+</section>
+<section id="summary-and-next-steps" class="level1">
+<h1>Summary and Next Steps</h1>
+<p>In this tutorial, you’ve learned:</p>
+<ol type="1">
+<li>How to identify stationarity and non-stationarity through visual inspection and formal tests</li>
+<li>How to apply appropriate transformations to achieve stationarity</li>
+<li>How to interpret ACF and PACF plots for different types of time series</li>
+<li>The mathematical representation of differencing operations</li>
+</ol>
+<p>In <strong>Tutorial 5</strong>, we’ll build on these foundations to explore:</p>
+<ul>
+<li>Simulation of ARIMA models to understand their behavior</li>
+<li>Identification of appropriate ARIMA model orders</li>
+<li>The beginning of the model building process for real financial data</li>
+</ul>
+<p>Before moving to the next tutorial, make sure you’re comfortable with the concepts of stationarity, differencing, and transformation, as these form the foundation for ARIMA modeling.</p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
